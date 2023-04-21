@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
+#include <map>
 #include <queue>
+#include <stack>
 using namespace std;
 
 //! FILL!
@@ -55,6 +57,62 @@ enum type_of_lex
     POLIZ_GO,
     POLIZ_FGO
 };
+//More understandable enum output
+ostream& operator<<(std::ostream& out, const type_of_lex value){
+    static map<type_of_lex, std::string> strings;
+    if (strings.size() == 0){
+#define INSERT_ELEMENT(p) strings[p] = #p
+        INSERT_ELEMENT(LEX_NULL);     
+        INSERT_ELEMENT(LEX_PROGRAM);
+        INSERT_ELEMENT(LEX_INT);
+        INSERT_ELEMENT(LEX_STRING);
+        INSERT_ELEMENT(LEX_BOOLEAN);
+        INSERT_ELEMENT(LEX_IF);
+        INSERT_ELEMENT(LEX_ELSE);
+        INSERT_ELEMENT(LEX_WHILE);
+        INSERT_ELEMENT(LEX_READ);
+        INSERT_ELEMENT(LEX_WRITE);
+        INSERT_ELEMENT(LEX_FOR);
+        INSERT_ELEMENT(LEX_BREAK);
+        INSERT_ELEMENT(LEX_GOTO);
+        INSERT_ELEMENT(LEX_TRUE);
+        INSERT_ELEMENT(LEX_FALSE);
+        INSERT_ELEMENT(LEX_LFP);
+        INSERT_ELEMENT(LEX_RFP);
+        INSERT_ELEMENT(LEX_SEMICOLON);
+        INSERT_ELEMENT(LEX_COMMA);
+        INSERT_ELEMENT(LEX_ASSIGN);
+        INSERT_ELEMENT(LEX_PLUS);
+        INSERT_ELEMENT(LEX_MINUS);
+        INSERT_ELEMENT(LEX_LP);
+        INSERT_ELEMENT(LEX_RP);
+        INSERT_ELEMENT(LEX_COLON);
+        INSERT_ELEMENT(LEX_LSS);
+        INSERT_ELEMENT(LEX_LEQ);
+        INSERT_ELEMENT(LEX_GTR);
+        INSERT_ELEMENT(LEX_GEQ);
+        INSERT_ELEMENT(LEX_NOT);
+        INSERT_ELEMENT(LEX_NEQ);
+        INSERT_ELEMENT(LEX_EQ);
+        INSERT_ELEMENT(LEX_OR);
+        INSERT_ELEMENT(LEX_TIMES);
+        INSERT_ELEMENT(LEX_SLASH);
+        INSERT_ELEMENT(LEX_AND);
+        INSERT_ELEMENT(LEX_DQU);
+        INSERT_ELEMENT(LEX_NUM);
+        INSERT_ELEMENT(LEX_ID);
+        INSERT_ELEMENT(LEX_STR);
+        INSERT_ELEMENT(POLIZ_LABEL);
+        INSERT_ELEMENT(POLIZ_ADDRESS);
+        INSERT_ELEMENT(POLIZ_GO);
+        INSERT_ELEMENT(POLIZ_FGO);
+#undef INSERT_ELEMENT
+    }   
+
+    return out << strings[value];
+}
+
+
 
 // TODO Lexem class
 class Lex
@@ -583,8 +641,11 @@ class Parser
     Scanner scan;
     Stack<var_info, 100> st_var;
     Stack<type_of_lex, 100> st_lex;
-    queue<Lex> q_lex;
+    queue<Lex> q_lex; //! DELETE
+    stack<queue<Lex>> s_lex;
+    Lex buffer; //buffer for 1 lex (used for FOR cycle)
     bool is_q_read = false; //read from queue or from scanner
+    bool is_s_read = false; //read from stack to queue
     bool is_desc = false;
     bool is_oper = false;
     void P(); // процедуры РС-метода
@@ -609,8 +670,16 @@ class Parser
     void gl()
     // получить очередную лексему
     {
-        is_q_read = !q_lex.empty(); // if empty switch to normal regime
-        if(is_q_read){
+        if(is_s_read) // read from stack queue
+        {
+            q_lex = s_lex.top();
+            s_lex.pop();
+            is_s_read = false;
+        }
+        if(is_q_read && q_lex.empty()){ //if we read all from queue, switch to normal regime
+            is_q_read = false;
+            curr_lex = buffer;
+        } else if(is_q_read){
             curr_lex = q_lex.front();
             q_lex.pop();
         } else {
@@ -647,7 +716,7 @@ void Parser::dec(type_of_lex type)
         if (TID[i].get_declare())
             throw "twice";
         else
-        {
+        {is_q_read = false;
             TID[i].put_declare();
             TID[i].put_type(type);
             TID[i].put_value(info.initial_value); // if no initialization value is NULL
@@ -726,6 +795,7 @@ void Parser::P()
 //?DONE
 void Parser::D1()
 {
+    bool is_desc_higher_level = is_desc;
     do
     {
         D();
@@ -736,6 +806,7 @@ void Parser::D1()
                 throw curr_lex;
 
     } while (is_desc);
+    is_desc = is_desc_higher_level;
 }
 // TODO Description
 //! IF not lexem, dont move!!!!
@@ -808,17 +879,23 @@ void Parser::V()
         st_var.push(var_info(idx, val));
     }
 }
-// New comment for git
-// One more new comment for git
+
+
+
 
 // TODO Operators parser
 void Parser::O1()
 {
+    bool is_desc_higher_level = is_desc;
     do
     {
         O();
     } while (is_desc);
+    is_desc = is_desc_higher_level;
 }
+
+
+
 // TODO Operator parser
 //? DONE
 void Parser::O()
@@ -826,6 +903,7 @@ void Parser::O()
     int pl0, pl1, pl2, pl3;
     if (c_type == LEX_IF) // IF operator
     {
+        is_desc = true;
         gl();
         if (c_type != LEX_LP)
             throw curr_lex;
@@ -857,6 +935,7 @@ void Parser::O()
     }
     else if (c_type == LEX_WHILE) // WHILE operator
     {
+        is_desc = true;
         pl0 = prog.get_free();
         gl();
         if(c_type != LEX_LP)
@@ -881,10 +960,11 @@ void Parser::O()
     else if (c_type == LEX_FOR) //! FUCK FOR CYCLES
     { // FOR operator
          //! for saving changing action
+        is_desc = true;
+        
         gl();
         if(c_type != LEX_LP)
             throw curr_lex;
-        
         gl();
         E(); //Initialising
         if(c_type != LEX_SEMICOLON)
@@ -898,10 +978,19 @@ void Parser::O()
             throw curr_lex;
         
         gl();
+        if(!q_lex.empty())
+            throw curr_lex;
         while(c_type != LEX_RP){ // Save changing action for later insertion
             q_lex.push(curr_lex); //Dangerous assign
             gl();
         }
+        q_lex.push(Lex(LEX_SEMICOLON,  (void *)new int(17))); // for correct assignment parser working (17 is num of semicolon in enum)
+
+        s_lex.push(q_lex); //Push to stack queue
+
+        while(!q_lex.empty()) //Make queue empty
+            q_lex.pop();
+
 
         pl1 = prog.get_free();
         prog.blank();
@@ -910,9 +999,12 @@ void Parser::O()
         {
             gl();
             O();
-            q_lex.push(curr_lex); //save first after cycle lex
+            buffer = curr_lex; //save first after cycle lex
+            is_s_read = true;
             is_q_read = true;
-            E();
+            gl();
+            O();
+            is_q_read = false; // for save test
             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(pl0)));
             prog.put_lex(Lex(POLIZ_GO));
             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl1);
@@ -963,26 +1055,34 @@ void Parser::O()
         else
             throw curr_lex;
     }*/
-    else if (c_type == LEX_ID) // ASSIGN or //! LABELED operator
+    else if (c_type == LEX_ID || c_type == LEX_MINUS) // expression operator or LABELED operator //?DONE
     {
-        //!check_id();
-        prog.put_lex(Lex(POLIZ_ADDRESS, (void*) new int(c_val)));
+        is_desc = true;
+        buffer = curr_lex;
         gl();
-        if (c_type == LEX_ASSIGN)
-        {
-            gl();
-            E();
-            //!eq_type();
-            prog.put_lex(Lex(LEX_ASSIGN));
-            if(c_type != LEX_SEMICOLON)
-                throw curr_lex;
-            gl();
+        if(c_type == LEX_COLON){ // LABELED operator
+            int idx = ((int*) buffer.get_value())[0];
+            if (TID[idx].get_declare())
+                throw "twice";
+            else
+            {
+                TID[idx].put_declare();
+                TID[idx].put_type(buffer.get_type());
+                TID[idx].put_value((void*) new int(prog.get_free())); // if no initialization value is NULL //! Could be +-1 
+            }
+            O();
+            return;
         }
-        else
+        //EXPRESSION operator
+        is_q_read = true;
+        E();
+        if(c_type != LEX_SEMICOLON)
             throw curr_lex;
+        gl();
     }
     else if (c_type == LEX_LFP)//? DONE
     { // COMBINED operator
+        is_desc = true;
         if(c_type != LEX_LFP)
             throw curr_lex;
         gl();
@@ -1003,30 +1103,32 @@ void Parser::O()
         is_desc = false;
     }
 }
+
 void Parser::E()
 {
+
+    
     while(c_type != LEX_SLASH){
         gl();
     }
-    prog.put_lex(Lex(LEX_NULL));
+    prog.put_lex(Lex(LEX_ID));
     gl();
 }
-//     // check_id();
-//     // prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
-//     // gl();
-//     // if (c_type == LEX_ASSIGN)
-//     // {
-//     //     gl();
-//     //     E();
-//     //     eq_type();
-//     //     prog.put_lex(Lex(LEX_ASSIGN));
-//     //     if (c_type != LEX_SEMICOLON)
-//     //         throw curr_lex;
-//     //     gl();
-//     // }
-//     // else
-//     //     throw curr_lex;
-
+    // check_id();
+    // prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
+    // gl();
+    // if (c_type == LEX_ASSIGN)
+    // {
+    //     gl();
+    //     E();
+    //     eq_type();
+    //     prog.put_lex(Lex(LEX_ASSIGN));
+    //     if (c_type != LEX_SEMICOLON)
+    //         throw curr_lex;
+    //     gl();
+    // }
+    // else
+    //     throw curr_lex;
 
     // E1();
     // if (c_type == LEX_EQ || c_type == LEX_LSS || c_type == LEX_GTR ||

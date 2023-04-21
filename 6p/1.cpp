@@ -96,7 +96,8 @@ bool Scanner::check_correct(){
     return correct;
 }
 int main(){
-    int x, y=2;
-    y = ((x = y) = 1) + 3;
-    cout << y;
+
+    int x;
+    1 || 2 + 3 || 4;
+    
 }
