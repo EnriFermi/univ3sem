@@ -643,9 +643,11 @@ class Parser
     Stack<type_of_lex, 100> st_lex;
     queue<Lex> q_lex; //! DELETE
     stack<queue<Lex>> s_lex;
-    Lex buffer; //buffer for 1 lex (used for FOR cycle)
+    stack<Lex> s_buffer; //buffer for lex (used for FOR cycle)
+    Lex buffer; //buffer just for fun
     bool is_q_read = false; //read from queue or from scanner
     bool is_s_read = false; //read from stack to queue
+    bool is_b_read = false; //read from 1 level buffer
     bool is_desc = false;
     bool is_oper = false;
     void P(); // процедуры РС-метода
@@ -655,8 +657,15 @@ class Parser
     void V();
     void O1();
     void O();
+
     void E();
-    void E1();
+    void RV();
+    void RV1();
+    void RV2();
+    void RV3();
+    void RV4();
+    void RV5();
+    void RV6();
     ////void T();
     void F();
     void dec(type_of_lex type);
@@ -670,7 +679,11 @@ class Parser
     void gl()
     // получить очередную лексему
     {
-        if(is_s_read) // read from stack queue
+        if(is_b_read){
+            curr_lex = buffer;
+            is_b_read = false;
+        }   
+        else if(is_s_read) // read from stack queue
         {
             q_lex = s_lex.top();
             s_lex.pop();
@@ -678,7 +691,8 @@ class Parser
         }
         if(is_q_read && q_lex.empty()){ //if we read all from queue, switch to normal regime
             is_q_read = false;
-            curr_lex = buffer;
+            curr_lex = s_buffer.top();
+            s_buffer.pop();
         } else if(is_q_read){
             curr_lex = q_lex.front();
             q_lex.pop();
@@ -999,7 +1013,7 @@ void Parser::O()
         {
             gl();
             O();
-            buffer = curr_lex; //save first after cycle lex
+            s_buffer.push(curr_lex); //save first after cycle lex
             is_s_read = true;
             is_q_read = true;
             gl();
@@ -1074,6 +1088,8 @@ void Parser::O()
             return;
         }
         //EXPRESSION operator
+        s_buffer.push(curr_lex);
+        curr_lex = buffer;
         is_q_read = true;
         E();
         if(c_type != LEX_SEMICOLON)
@@ -1103,17 +1119,73 @@ void Parser::O()
         is_desc = false;
     }
 }
-
+//? DONE?
 void Parser::E()
 {
-
-    
-    while(c_type != LEX_SLASH){
-        gl();
-    }
-    prog.put_lex(Lex(LEX_ID));
+    buffer = curr_lex;
     gl();
+    is_b_read = true; 
+    if(c_type == LEX_ASSIGN){ //ID=E
+        gl();
+        check_id();
+        prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
+        gl();
+        E();
+        eq_type();
+        prog.put_lex(Lex(LEX_ASSIGN));
+        gl();
+    } else { //RV
+        s_buffer.push(curr_lex);
+        is_q_read = true;
+        gl(); //set curr_value back
+        RV();
+    }
+    // while(c_type != LEX_SLASH){
+    //     gl();
+    // }
+    // prog.put_lex(Lex(LEX_ID));
+    // gl();
 }
+void Parser::RV()
+{
+    buffer = curr_lex;
+    gl();
+    if(c_type == LEX_OR){ //RV1||RV
+
+    } else { //RV1
+        s_buffer.push(curr_lex);
+        curr_lex = buffer;
+        is_q_read = true;
+        is_b_read = true;
+        gl(); 
+        RV1();
+    }
+}
+void Parser::RV1()
+{
+    
+}
+void Parser::RV2()
+{
+    
+}
+void Parser::RV3()
+{
+    
+}
+void Parser::RV4()
+{
+    
+}
+void Parser::RV5()
+{
+    
+}
+void Parser::RV6()
+{
+    
+}
+
     // check_id();
     // prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
     // gl();
@@ -1140,6 +1212,11 @@ void Parser::E()
     //     check_op();
     // }
 // }
+
+
+
+
+
 // void Parser::E1()
 // {
 //     T();
