@@ -1,0 +1,11 @@
+struct A{
+    int a;
+    A(int x=0){a=x;};
+    A& operator*=(const A & x){
+        a *= x.a;
+        return *this;
+    };
+    int get(){
+        return a;
+    };
+};
