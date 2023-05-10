@@ -107,8 +107,7 @@ ostream& operator<<(std::ostream& out, const type_of_lex value){
         INSERT_ELEMENT(POLIZ_GO);
         INSERT_ELEMENT(POLIZ_FGO);
 #undef INSERT_ELEMENT
-    }   
-
+    }
     return out << strings[value];
 }
 
@@ -251,7 +250,6 @@ class Scanner
     char c;
     char buf[80];
     int buf_top;
-
     void clear()
     {
         buf_top = 0;
@@ -260,6 +258,9 @@ class Scanner
     }
     void add()
     {
+        // if(buf_top > size(buf)){
+        //     buf =(char *) realloc(buf, size(buf)+80)
+        // }
         buf[buf_top++] = c;
     }
     int look(const char *buf, char **list)
@@ -439,7 +440,7 @@ Lex Scanner::get_lex()
                 gc();
                 CS = ALE_NEQ_NEG_EQ;
             }
-            else // other one letter Lexems
+            else // other one letter Lexems  //!  Обработать overflow string
                 CS = DELIM;
             break;
         case STRING:
@@ -548,643 +549,643 @@ Lex Scanner::get_lex()
     } while (true);
 }
 
-// TODO Stack class
-template <class T, int max_size>
-class Stack
-{
-    T s[max_size];
-    int top;
+// // TODO Stack class
+// template <class T, int max_size>
+// class Stack
+// {
+//     T s[max_size];
+//     int top;
 
-public:
-    Stack() { top = 0; }
-    void reset() { top = 0; }
-    void push(T i);
-    T pop();
-    bool is_empty() { return top == 0; }
-    bool is_full() { return top == max_size; }
-};
+// public:
+//     Stack() { top = 0; }
+//     void reset() { top = 0; }
+//     void push(T i);
+//     T pop();
+//     bool is_empty() { return top == 0; }
+//     bool is_full() { return top == max_size; }
+// };
 
-template <class T, int max_size>
-void Stack<T, max_size>::push(T i)
-{
-    if (!is_full())
-    {
-        s[top] = i;
-        ++top;
-    }
-    else
-        throw "Stack_is_full";
-}
-template <class T, int max_size>
-T Stack<T, max_size>::pop()
-{
-    if (!is_empty())
-    {
-        --top;
-        return s[top];
-    }
-    else
-        throw "Stack_is_empty";
-}
-// TODO Poliz class
-class Poliz
-{
-    Lex *p;
-    int size;
-    int free;
+// template <class T, int max_size>
+// void Stack<T, max_size>::push(T i)
+// {
+//     if (!is_full())
+//     {
+//         s[top] = i;
+//         ++top;
+//     }
+//     else
+//         throw "Stack_is_full";
+// }
+// template <class T, int max_size>
+// T Stack<T, max_size>::pop()
+// {
+//     if (!is_empty())
+//     {
+//         --top;
+//         return s[top];
+//     }
+//     else
+//         throw "Stack_is_empty";
+// }
+// // TODO Poliz class
+// class Poliz
+// {
+//     Lex *p;
+//     int size;
+//     int free;
 
-public:
-    Poliz(int max_size)
-    {
-        p = new Lex[size = max_size];
-        free = 0;
-    };
-    ~Poliz() { delete[] p; };
-    void put_lex(Lex l)
-    {
-        p[free] = l;
-        ++free;
-    };
-    void put_lex(Lex l, int place) { p[place] = l; };
-    void blank() { ++free; };
-    int get_free() { return free; };
-    Lex &operator[](int index)
-    {
-        if (index > size)
-            throw "POLIZ:out of array";
-        else if (index > free)
-            throw "POLIZ:indefinite element of array";
-        else
-            return p[index];
-    };
-    void print()
-    {
-        for (int i = 0; i < free; ++i)
-            cout << p[i];
-    };
-};
+// public:
+//     Poliz(int max_size)
+//     {
+//         p = new Lex[size = max_size];
+//         free = 0;
+//     };
+//     ~Poliz() { delete[] p; };
+//     void put_lex(Lex l)
+//     {
+//         p[free] = l;
+//         ++free;
+//     };
+//     void put_lex(Lex l, int place) { p[place] = l; };
+//     void blank() { ++free; };
+//     int get_free() { return free; };
+//     Lex &operator[](int index)
+//     {
+//         if (index > size)
+//             throw "POLIZ:out of array";
+//         else if (index > free)
+//             throw "POLIZ:indefinite element of array";
+//         else
+//             return p[index];
+//     };
+//     void print()
+//     {
+//         for (int i = 0; i < free; ++i)
+//             cout << p[i];
+//     };
+// };
 
-// TODO Syntax parser
-class Parser
-{
-    struct var_info
-    {
-        int index_in_TID;
-        void *initial_value;
-        var_info(int i, void *val) : index_in_TID(i), initial_value(val){};
-        var_info(){};
-    };
-    Lex curr_lex; // текущая лексема
-    type_of_lex c_type;
-    type_of_lex v_type;
-    int c_val;
-    Scanner scan;
-    Stack<var_info, 100> st_var;
-    Stack<type_of_lex, 100> st_lex;
-    queue<Lex> q_lex; //! DELETE
-    stack<queue<Lex>> s_lex;
-    stack<Lex> s_buffer; //buffer for lex (used for FOR cycle)
-    Lex buffer; //buffer just for fun
-    bool is_q_read = false; //read from queue or from scanner
-    bool is_s_read = false; //read from stack to queue
-    bool is_b_read = false; //read from 1 level buffer
-    bool is_desc = false;
-    bool is_oper = false;
-    void P(); // процедуры РС-метода
-    void D1();
-    void D();
-    void T();
-    void V();
-    void O1();
-    void O();
+// // TODO Syntax parser
+// class Parser
+// {
+//     struct var_info
+//     {
+//         int index_in_TID;
+//         void *initial_value;
+//         var_info(int i, void *val) : index_in_TID(i), initial_value(val){};
+//         var_info(){};
+//     };
+//     Lex curr_lex; // текущая лексема
+//     type_of_lex c_type;
+//     type_of_lex v_type;
+//     int c_val;
+//     Scanner scan;
+//     Stack<var_info, 100> st_var;
+//     Stack<type_of_lex, 100> st_lex;
+//     queue<Lex> q_lex; //! DELETE
+//     stack<queue<Lex>> s_lex;
+//     stack<Lex> s_buffer; //buffer for lex (used for FOR cycle)
+//     Lex buffer; //buffer just for fun
+//     bool is_q_read = false; //read from queue or from scanner
+//     bool is_s_read = false; //read from stack to queue
+//     bool is_b_read = false; //read from 1 level buffer
+//     bool is_desc = false;
+//     bool is_oper = false;
+//     void P(); // процедуры РС-метода
+//     void D1();
+//     void D();
+//     void T();
+//     void V();
+//     void O1();
+//     void O();
 
-    void E();
-    void RV();
-    void RV1();
-    void RV2();
-    void RV3();
-    void RV4();
-    void RV5();
-    void RV6();
-    ////void T();
-    void F();
-    void dec(type_of_lex type);
-    void check_id();
-    void check_op();
-    void check_not();
-    void eq_type();
-    void eq_bool();
-    void check_id_in_read();
-    // семантичиеские действия
-    void gl()
-    // получить очередную лексему
-    {
-        if(is_b_read){
-            curr_lex = buffer;
-            is_b_read = false;
-        }   
-        else if(is_s_read) // read from stack queue
-        {
-            q_lex = s_lex.top();
-            s_lex.pop();
-            is_s_read = false;
-        }
-        if(is_q_read && q_lex.empty()){ //if we read all from queue, switch to normal regime
-            is_q_read = false;
-            curr_lex = s_buffer.top();
-            s_buffer.pop();
-        } else if(is_q_read){
-            curr_lex = q_lex.front();
-            q_lex.pop();
-        } else {
-            curr_lex = scan.get_lex();
-        }
-        c_type = curr_lex.get_type();
-        c_val = ((int *)curr_lex.get_value())[0]; // could be some random int
-    }
+//     void E();
+//     void RV();
+//     void RV1();
+//     void RV2();
+//     void RV3();
+//     void RV4();
+//     void RV5();
+//     void RV6();
+//     ////void T();
+//     void F();
+//     void dec(type_of_lex type);
+//     void check_id();
+//     void check_op();
+//     void check_not();
+//     void eq_type();
+//     void eq_bool();
+//     void check_id_in_read();
+//     // семантичиеские действия
+//     void gl()
+//     // получить очередную лексему
+//     {
+//         if(is_b_read){
+//             curr_lex = buffer;
+//             is_b_read = false;
+//         }   
+//         else if(is_s_read) // read from stack queue
+//         {
+//             q_lex = s_lex.top();
+//             s_lex.pop();
+//             is_s_read = false;
+//         }
+//         if(is_q_read && q_lex.empty()){ //if we read all from queue, switch to normal regime
+//             is_q_read = false;
+//             curr_lex = s_buffer.top();
+//             s_buffer.pop();
+//         } else if(is_q_read){
+//             curr_lex = q_lex.front();
+//             q_lex.pop();
+//         } else {
+//             curr_lex = scan.get_lex();
+//         }
+//         c_type = curr_lex.get_type();
+//         c_val = ((int *)curr_lex.get_value())[0]; // could be some random int
+//     }
 
-public:
-    Poliz prog = Poliz(1000); // LATER
-    // внутреннее представление программы
-    Parser(const char *program) : scan(program) /*,prog(1000)*/ {}
-    void analyze(); // анализатор с действиями
-};
-// main function
-void Parser::analyze()
-{
-    gl();
-    P();
-    prog.print();
-    cout << endl
-         << "Yes!!!" << endl;
-}
-//? Don't know
-void Parser::dec(type_of_lex type)
-{
-    var_info info;
-    int i;
-    while (!st_var.is_empty())
-    {
-        info = st_var.pop();
-        i = info.index_in_TID;
-        if (TID[i].get_declare())
-            throw "twice";
-        else
-        {is_q_read = false;
-            TID[i].put_declare();
-            TID[i].put_type(type);
-            TID[i].put_value(info.initial_value); // if no initialization value is NULL
-        }
-    }
-}
+// public:
+//     Poliz prog = Poliz(1000); // LATER
+//     // внутреннее представление программы
+//     Parser(const char *program) : scan(program) /*,prog(1000)*/ {}
+//     void analyze(); // анализатор с действиями
+// };
+// // main function
+// void Parser::analyze()
+// {
+//     gl();
+//     P();
+//     prog.print();
+//     cout << endl
+//          << "Yes!!!" << endl;
+// }
+// //? Don't know
+// void Parser::dec(type_of_lex type)
+// {
+//     var_info info;
+//     int i;
+//     while (!st_var.is_empty())
+//     {
+//         info = st_var.pop();
+//         i = info.index_in_TID;
+//         if (TID[i].get_declare())
+//             throw "twice";
+//         else
+//         {is_q_read = false;
+//             TID[i].put_declare();
+//             TID[i].put_type(type);
+//             TID[i].put_value(info.initial_value); // if no initialization value is NULL
+//         }
+//     }
+// }
 
-void Parser::check_id()
-{
-    if (TID[c_val].get_declare())
-        st_lex.push(TID[c_val].get_type());
-    else
-        throw "not declared";
-}
-void Parser::check_op() // Checks operation types
-{
-    type_of_lex t1, t2, op, t = LEX_INT, r = LEX_BOOLEAN;
-    t2 = st_lex.pop();
-    op = st_lex.pop();
-    t1 = st_lex.pop();
-    if (op == LEX_PLUS || op == LEX_MINUS || op == LEX_TIMES || op == LEX_SLASH)
-        r = LEX_INT;
-    if (op == LEX_OR || op == LEX_AND)
-        t = LEX_BOOLEAN;
-    if (t1 == t2 && t1 == t)
-        st_lex.push(r);
-    else
-        throw "wrong types are in operation";
-}
+// void Parser::check_id()
+// {
+//     if (TID[c_val].get_declare())
+//         st_lex.push(TID[c_val].get_type());
+//     else
+//         throw "not declared";
+// }
+// void Parser::check_op() // Checks operation types
+// {
+//     type_of_lex t1, t2, op, t = LEX_INT, r = LEX_BOOLEAN;
+//     t2 = st_lex.pop();
+//     op = st_lex.pop();
+//     t1 = st_lex.pop();
+//     if (op == LEX_PLUS || op == LEX_MINUS || op == LEX_TIMES || op == LEX_SLASH)
+//         r = LEX_INT;
+//     if (op == LEX_OR || op == LEX_AND)
+//         t = LEX_BOOLEAN;
+//     if (t1 == t2 && t1 == t)
+//         st_lex.push(r);
+//     else
+//         throw "wrong types are in operation";
+// }
 
-void Parser::check_not()
-{
-    if (st_lex.pop() != LEX_BOOLEAN)
-        throw "wrong type is in not";
-    else
-    {
-        st_lex.push(LEX_BOOLEAN);
-    }
-}
-void Parser::eq_type()
-{
-    if (st_lex.pop() != st_lex.pop())
-        throw "wrong types are in :=";
-}
+// void Parser::check_not()
+// {
+//     if (st_lex.pop() != LEX_BOOLEAN)
+//         throw "wrong type is in not";
+//     else
+//     {
+//         st_lex.push(LEX_BOOLEAN);
+//     }
+// }
+// void Parser::eq_type()
+// {
+//     if (st_lex.pop() != st_lex.pop())
+//         throw "wrong types are in :=";
+// }
 
-void Parser::eq_bool()
-{
-    if (st_lex.pop() != LEX_BOOLEAN)
-        throw "expression is not boolean";
-}
+// void Parser::eq_bool()
+// {
+//     if (st_lex.pop() != LEX_BOOLEAN)
+//         throw "expression is not boolean";
+// }
 
-void Parser::check_id_in_read()
-{
-    if (!TID[c_val].get_declare())
-        throw "not declared";
-}
+// void Parser::check_id_in_read()
+// {
+//     if (!TID[c_val].get_declare())
+//         throw "not declared";
+// }
 
-// TODO Program parser
-//?DONE
-void Parser::P()
-{
-    if (c_type == LEX_PROGRAM)
-        gl();
-    else
-        throw curr_lex;
-    if (c_type == LEX_LFP)
-        gl();
-    else
-        throw curr_lex;
-    D1();
-    O1();
-    if (c_type != LEX_RFP)
-        throw curr_lex;
-}
-// TODO Descriptions
-//?DONE
-void Parser::D1()
-{
-    bool is_desc_higher_level = is_desc;
-    do
-    {
-        D();
-        if (is_desc)
-            if (c_type == LEX_SEMICOLON)
-                gl();
-            else
-                throw curr_lex;
+// // TODO Program parser
+// //?DONE
+// void Parser::P()
+// {
+//     if (c_type == LEX_PROGRAM)
+//         gl();
+//     else
+//         throw curr_lex;
+//     if (c_type == LEX_LFP)
+//         gl();
+//     else
+//         throw curr_lex;
+//     D1();
+//     O1();
+//     if (c_type != LEX_RFP)
+//         throw curr_lex;
+// }
+// // TODO Descriptions
+// //?DONE
+// void Parser::D1()
+// {
+//     bool is_desc_higher_level = is_desc;
+//     do
+//     {
+//         D();
+//         if (is_desc)
+//             if (c_type == LEX_SEMICOLON)
+//                 gl();
+//             else
+//                 throw curr_lex;
 
-    } while (is_desc);
-    is_desc = is_desc_higher_level;
-}
-// TODO Description
-//! IF not lexem, dont move!!!!
-void Parser::D()
-{
-    st_var.reset();
-    if (c_type == LEX_INT || c_type == LEX_STRING || c_type == LEX_BOOLEAN)
-    { // type defining
-        v_type = c_type;
-        is_desc = true;
-    }
-    else
-    {
-        is_desc = false;
-        return; // no descriptions (probably)
-    }
-    gl();
-    V();
-    while (c_type == LEX_COMMA)
-    {
-        gl();
-        V();
-    }
-    dec(v_type); // saving what we initialized
-}
+//     } while (is_desc);
+//     is_desc = is_desc_higher_level;
+// }
+// // TODO Description
+// //! IF not lexem, dont move!!!!
+// void Parser::D()
+// {
+//     st_var.reset();
+//     if (c_type == LEX_INT || c_type == LEX_STRING || c_type == LEX_BOOLEAN)
+//     { // type defining
+//         v_type = c_type;
+//         is_desc = true;
+//     }
+//     else
+//     {
+//         is_desc = false;
+//         return; // no descriptions (probably)
+//     }
+//     gl();
+//     V();
+//     while (c_type == LEX_COMMA)
+//     {
+//         gl();
+//         V();
+//     }
+//     dec(v_type); // saving what we initialized
+// }
 
-// TODO Variable parser
-void Parser::V()
-{
-    bool need_minus = false;
-    if (c_type != LEX_ID)
-        throw curr_lex;
-    else
-    {
-        int idx = c_val;
-        void *val = NULL;
-        int *buffer;
-        gl();
-        if (c_type == LEX_ASSIGN)
-        { // const initialization
-            gl();
+// // TODO Variable parser
+// void Parser::V()
+// {
+//     bool need_minus = false;
+//     if (c_type != LEX_ID)
+//         throw curr_lex;
+//     else
+//     {
+//         int idx = c_val;
+//         void *val = NULL;
+//         int *buffer;
+//         gl();
+//         if (c_type == LEX_ASSIGN)
+//         { // const initialization
+//             gl();
 
-            if (c_type == LEX_MINUS)
-            { // check if sign exist exist
-                need_minus = true;
-                gl();
-            }
-            else if (c_type == LEX_PLUS)
-                gl();
+//             if (c_type == LEX_MINUS)
+//             { // check if sign exist exist
+//                 need_minus = true;
+//                 gl();
+//             }
+//             else if (c_type == LEX_PLUS)
+//                 gl();
 
-            buffer = (int *)curr_lex.get_value();          // get buffer fro future
-            if (c_type == LEX_STR && v_type == LEX_STRING) // STRING
-                val = curr_lex.get_value();
-            else if (c_type == LEX_NUM && v_type == LEX_INT)
-            { // INT
-                if (need_minus)
-                    buffer[0] = buffer[0] * (-1);
-                val = curr_lex.get_value();
-            }
-            else if ((c_type == LEX_TRUE || c_type == LEX_FALSE) && (v_type == LEX_INT || v_type == LEX_BOOLEAN))
-            {                               // BOOLEAN
-                buffer[0] = buffer[0] - 13; // change values from 13, 14(indicies of words) to 0, 1
-                val = curr_lex.get_value();
-            }
-            else
-                throw curr_lex;
-            gl();
-        }
-        // cout <<  ((int *) val)[0] << endl;
-        st_var.push(var_info(idx, val));
-    }
-}
-
-
-
-
-// TODO Operators parser
-void Parser::O1()
-{
-    bool is_desc_higher_level = is_desc;
-    do
-    {
-        O();
-    } while (is_desc);
-    is_desc = is_desc_higher_level;
-}
+//             buffer = (int *)curr_lex.get_value();          // get buffer fro future
+//             if (c_type == LEX_STR && v_type == LEX_STRING) // STRING
+//                 val = curr_lex.get_value();
+//             else if (c_type == LEX_NUM && v_type == LEX_INT)
+//             { // INT
+//                 if (need_minus)
+//                     buffer[0] = buffer[0] * (-1);
+//                 val = curr_lex.get_value();
+//             }
+//             else if ((c_type == LEX_TRUE || c_type == LEX_FALSE) && (v_type == LEX_INT || v_type == LEX_BOOLEAN))
+//             {                               // BOOLEAN
+//                 buffer[0] = buffer[0] - 13; // change values from 13, 14(indicies of words) to 0, 1
+//                 val = curr_lex.get_value();
+//             }
+//             else
+//                 throw curr_lex;
+//             gl();
+//         }
+//         // cout <<  ((int *) val)[0] << endl;
+//         st_var.push(var_info(idx, val));
+//     }
+// }
 
 
 
-// TODO Operator parser
-//? DONE
-void Parser::O()
-{
-    int pl0, pl1, pl2, pl3;
-    if (c_type == LEX_IF) // IF operator
-    {
-        is_desc = true;
-        gl();
-        if (c_type != LEX_LP)
-            throw curr_lex;
-        gl();
-        E();
-        //!eq_bool();
-        pl2 = prog.get_free();        // get begin IF operator
-        prog.blank();                 // create blank space
-        prog.put_lex(Lex(POLIZ_FGO)); //! ???
-        if (c_type == LEX_RP)
-        {
-            gl();
-            O();
-            pl3 = prog.get_free();
-            prog.blank();
-            prog.put_lex(Lex(POLIZ_GO));
-            prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl2);
-            if (c_type == LEX_ELSE)
-            {
-                gl();
-                O();
-                prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl3);
-            }
-            else
-                throw curr_lex;
-        }
-        else
-            throw curr_lex;
-    }
-    else if (c_type == LEX_WHILE) // WHILE operator
-    {
-        is_desc = true;
-        pl0 = prog.get_free();
-        gl();
-        if(c_type != LEX_LP)
-            throw curr_lex;
-        gl();
-        E();
-        //!eq_bool();
-        pl1 = prog.get_free();
-        prog.blank();
-        prog.put_lex(Lex(POLIZ_FGO));
-        if (c_type == LEX_RP)
-        {
-            gl();
-            O();
-            prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(pl0)));
-            prog.put_lex(Lex(POLIZ_GO));
-            prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl1);
-        }
-        else
-            throw curr_lex;
-    }
-    else if (c_type == LEX_FOR) //! FUCK FOR CYCLES
-    { // FOR operator
-         //! for saving changing action
-        is_desc = true;
+
+// // TODO Operators parser
+// void Parser::O1()
+// {
+//     bool is_desc_higher_level = is_desc;
+//     do
+//     {
+//         O();
+//     } while (is_desc);
+//     is_desc = is_desc_higher_level;
+// }
+
+
+
+// // TODO Operator parser
+// //? DONE
+// void Parser::O()
+// {
+//     int pl0, pl1, pl2, pl3;
+//     if (c_type == LEX_IF) // IF operator
+//     {
+//         is_desc = true;
+//         gl();
+//         if (c_type != LEX_LP)
+//             throw curr_lex;
+//         gl();
+//         E();
+//         //!eq_bool();
+//         pl2 = prog.get_free();        // get begin IF operator
+//         prog.blank();                 // create blank space
+//         prog.put_lex(Lex(POLIZ_FGO)); //! ???
+//         if (c_type == LEX_RP)
+//         {
+//             gl();
+//             O();
+//             pl3 = prog.get_free();
+//             prog.blank();
+//             prog.put_lex(Lex(POLIZ_GO));
+//             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl2);
+//             if (c_type == LEX_ELSE)
+//             {
+//                 gl();
+//                 O();
+//                 prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl3);
+//             }
+//             else
+//                 throw curr_lex;
+//         }
+//         else
+//             throw curr_lex;
+//     }
+//     else if (c_type == LEX_WHILE) // WHILE operator
+//     {
+//         is_desc = true;
+//         pl0 = prog.get_free();
+//         gl();
+//         if(c_type != LEX_LP)
+//             throw curr_lex;
+//         gl();
+//         E();
+//         //!eq_bool();
+//         pl1 = prog.get_free();
+//         prog.blank();
+//         prog.put_lex(Lex(POLIZ_FGO));
+//         if (c_type == LEX_RP)
+//         {
+//             gl();
+//             O();
+//             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(pl0)));
+//             prog.put_lex(Lex(POLIZ_GO));
+//             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl1);
+//         }
+//         else
+//             throw curr_lex;
+//     }
+//     else if (c_type == LEX_FOR) //! FUCK FOR CYCLES
+//     { // FOR operator
+//          //! for saving changing action
+//         is_desc = true;
         
-        gl();
-        if(c_type != LEX_LP)
-            throw curr_lex;
-        gl();
-        E(); //Initialising
-        if(c_type != LEX_SEMICOLON)
-            throw curr_lex;
+//         gl();
+//         if(c_type != LEX_LP)
+//             throw curr_lex;
+//         gl();
+//         E(); //Initialising
+//         if(c_type != LEX_SEMICOLON)
+//             throw curr_lex;
         
-        pl0 = prog.get_free(); //Condition address saving
-        gl();
-        E();
-        //!eq_bool();
-        if(c_type != LEX_SEMICOLON)
-            throw curr_lex;
+//         pl0 = prog.get_free(); //Condition address saving
+//         gl();
+//         E();
+//         //!eq_bool();
+//         if(c_type != LEX_SEMICOLON)
+//             throw curr_lex;
         
-        gl();
-        if(!q_lex.empty())
-            throw curr_lex;
-        while(c_type != LEX_RP){ // Save changing action for later insertion
-            q_lex.push(curr_lex); //Dangerous assign
-            gl();
-        }
-        q_lex.push(Lex(LEX_SEMICOLON,  (void *)new int(17))); // for correct assignment parser working (17 is num of semicolon in enum)
+//         gl();
+//         if(!q_lex.empty())
+//             throw curr_lex;
+//         while(c_type != LEX_RP){ // Save changing action for later insertion
+//             q_lex.push(curr_lex); //Dangerous assign
+//             gl();
+//         }
+//         q_lex.push(Lex(LEX_SEMICOLON,  (void *)new int(17))); // for correct assignment parser working (17 is num of semicolon in enum)
 
-        s_lex.push(q_lex); //Push to stack queue
+//         s_lex.push(q_lex); //Push to stack queue
 
-        while(!q_lex.empty()) //Make queue empty
-            q_lex.pop();
+//         while(!q_lex.empty()) //Make queue empty
+//             q_lex.pop();
 
 
-        pl1 = prog.get_free();
-        prog.blank();
-        prog.put_lex(Lex(POLIZ_FGO));
-        if (c_type == LEX_RP)
-        {
-            gl();
-            O();
-            s_buffer.push(curr_lex); //save first after cycle lex
-            is_s_read = true;
-            is_q_read = true;
-            gl();
-            O();
-            is_q_read = false; // for save test
-            prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(pl0)));
-            prog.put_lex(Lex(POLIZ_GO));
-            prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl1);
-        }
-        else
-            throw curr_lex;
-    }
-    /*else if (c_type == LEX_READ) // READ operator
-    {
-        gl();
-        if (c_type == LEX_LPAREN)
-        {
-            gl();
-            if (c_type == LEX_ID)
-            {
-                check_id_in_read();
-                prog.put_lex(Lex(POLIZ_ADDRESS, c_val));
-                gl();
-            }
-            else
-                throw curr_lex;
-            if (c_type == LEX_RPAREN)
-            {
-                gl();
-                prog.put_lex(Lex(LEX_READ));
-            }
-            else
-                throw curr_lex;
-        }
-        else
-            throw curr_lex;
-    }
-    else if (c_type == LEX_WRITE) // WRITE operator
-    {
-        gl();
-        if (c_type == LEX_LPAREN)
-        {
-            gl();
-            E();
-            if (c_type == LEX_RPAREN)
-            {
-                gl();
-                prog.put_lex(Lex(LEX_WRITE));
-            }
-            else
-                throw curr_lex;
-        }
-        else
-            throw curr_lex;
-    }*/
-    else if (c_type == LEX_ID || c_type == LEX_MINUS) // expression operator or LABELED operator //?DONE
-    {
-        is_desc = true;
-        buffer = curr_lex;
-        gl();
-        if(c_type == LEX_COLON){ // LABELED operator
-            int idx = ((int*) buffer.get_value())[0];
-            if (TID[idx].get_declare())
-                throw "twice";
-            else
-            {
-                TID[idx].put_declare();
-                TID[idx].put_type(buffer.get_type());
-                TID[idx].put_value((void*) new int(prog.get_free())); // if no initialization value is NULL //! Could be +-1 
-            }
-            O();
-            return;
-        }
-        //EXPRESSION operator
-        s_buffer.push(curr_lex);
-        curr_lex = buffer;
-        is_q_read = true;
-        E();
-        if(c_type != LEX_SEMICOLON)
-            throw curr_lex;
-        gl();
-    }
-    else if (c_type == LEX_LFP)//? DONE
-    { // COMBINED operator
-        is_desc = true;
-        if(c_type != LEX_LFP)
-            throw curr_lex;
-        gl();
-        O1();
-        if(c_type != LEX_RFP)
-            throw curr_lex;
-        gl();
-    }
-    /*else if (c_type == LEX_GOTO)
-    { // GOTO operator
+//         pl1 = prog.get_free();
+//         prog.blank();
+//         prog.put_lex(Lex(POLIZ_FGO));
+//         if (c_type == LEX_RP)
+//         {
+//             gl();
+//             O();
+//             s_buffer.push(curr_lex); //save first after cycle lex
+//             is_s_read = true;
+//             is_q_read = true;
+//             gl();
+//             O();
+//             is_q_read = false; // for save test
+//             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(pl0)));
+//             prog.put_lex(Lex(POLIZ_GO));
+//             prog.put_lex(Lex(POLIZ_LABEL, (void *)new int(prog.get_free())), pl1);
+//         }
+//         else
+//             throw curr_lex;
+//     }
+//     /*else if (c_type == LEX_READ) // READ operator
+//     {
+//         gl();
+//         if (c_type == LEX_LPAREN)
+//         {
+//             gl();
+//             if (c_type == LEX_ID)
+//             {
+//                 check_id_in_read();
+//                 prog.put_lex(Lex(POLIZ_ADDRESS, c_val));
+//                 gl();
+//             }
+//             else
+//                 throw curr_lex;
+//             if (c_type == LEX_RPAREN)
+//             {
+//                 gl();
+//                 prog.put_lex(Lex(LEX_READ));
+//             }
+//             else
+//                 throw curr_lex;
+//         }
+//         else
+//             throw curr_lex;
+//     }
+//     else if (c_type == LEX_WRITE) // WRITE operator
+//     {
+//         gl();
+//         if (c_type == LEX_LPAREN)
+//         {
+//             gl();
+//             E();
+//             if (c_type == LEX_RPAREN)
+//             {
+//                 gl();
+//                 prog.put_lex(Lex(LEX_WRITE));
+//             }
+//             else
+//                 throw curr_lex;
+//         }
+//         else
+//             throw curr_lex;
+//     }*/
+//     else if (c_type == LEX_ID || c_type == LEX_MINUS) // expression operator or LABELED operator //?DONE
+//     {
+//         is_desc = true;
+//         buffer = curr_lex;
+//         gl();
+//         if(c_type == LEX_COLON){ // LABELED operator
+//             int idx = ((int*) buffer.get_value())[0];
+//             if (TID[idx].get_declare())
+//                 throw "twice";
+//             else
+//             {
+//                 TID[idx].put_declare();
+//                 TID[idx].put_type(buffer.get_type());
+//                 TID[idx].put_value((void*) new int(prog.get_free())); // if no initialization value is NULL //! Could be +-1 
+//             }
+//             O();
+//             return;
+//         }
+//         //EXPRESSION operator
+//         s_buffer.push(curr_lex);
+//         curr_lex = buffer;
+//         is_q_read = true;
+//         E();
+//         if(c_type != LEX_SEMICOLON)
+//             throw curr_lex;
+//         gl();
+//     }
+//     else if (c_type == LEX_LFP)//? DONE
+//     { // COMBINED operator
+//         is_desc = true;
+//         if(c_type != LEX_LFP)
+//             throw curr_lex;
+//         gl();
+//         O1();
+//         if(c_type != LEX_RFP)
+//             throw curr_lex;
+//         gl();
+//     }
+//     /*else if (c_type == LEX_GOTO)
+//     { // GOTO operator
 
-    }
-    else if (c_type == LEX_BREAK)
-    { // BREAK operator
+//     }
+//     else if (c_type == LEX_BREAK)
+//     { // BREAK operator
 
-    }*/
-    else{
-        is_desc = false;
-    }
-}
-//? DONE?
-void Parser::E()
-{
-    buffer = curr_lex;
-    gl();
-    is_b_read = true; 
-    if(c_type == LEX_ASSIGN){ //ID=E
-        gl();
-        check_id();
-        prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
-        gl();
-        E();
-        eq_type();
-        prog.put_lex(Lex(LEX_ASSIGN));
-        gl();
-    } else { //RV
-        s_buffer.push(curr_lex);
-        is_q_read = true;
-        gl(); //set curr_value back
-        RV();
-    }
-    // while(c_type != LEX_SLASH){
-    //     gl();
-    // }
-    // prog.put_lex(Lex(LEX_ID));
-    // gl();
-}
-void Parser::RV()
-{
-    buffer = curr_lex;
-    gl();
-    if(c_type == LEX_OR){ //RV1||RV
+//     }*/
+//     else{
+//         is_desc = false;
+//     }
+// }
+// //? DONE?
+// void Parser::E()
+// {
+//     buffer = curr_lex;
+//     gl();
+//     is_b_read = true; 
+//     if(c_type == LEX_ASSIGN){ //ID=E
+//         gl();
+//         check_id();
+//         prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
+//         gl();
+//         E();
+//         eq_type();
+//         prog.put_lex(Lex(LEX_ASSIGN));
+//         gl();
+//     } else { //RV
+//         s_buffer.push(curr_lex);
+//         is_q_read = true;
+//         gl(); //set curr_value back
+//         RV();
+//     }
+//     // while(c_type != LEX_SLASH){
+//     //     gl();
+//     // }
+//     // prog.put_lex(Lex(LEX_ID));
+//     // gl();
+// }
+// void Parser::RV()
+// {
+//     buffer = curr_lex;
+//     gl();
+//     if(c_type == LEX_OR){ //RV1||RV
 
-    } else { //RV1
-        s_buffer.push(curr_lex);
-        curr_lex = buffer;
-        is_q_read = true;
-        is_b_read = true;
-        gl(); 
-        RV1();
-    }
-}
-void Parser::RV1()
-{
+//     } else { //RV1
+//         s_buffer.push(curr_lex);
+//         curr_lex = buffer;
+//         is_q_read = true;
+//         is_b_read = true;
+//         gl(); 
+//         RV1();
+//     }
+// }
+// void Parser::RV1()
+// {
     
-}
-void Parser::RV2()
-{
+// }
+// void Parser::RV2()
+// {
     
-}
-void Parser::RV3()
-{
+// }
+// void Parser::RV3()
+// {
     
-}
-void Parser::RV4()
-{
+// }
+// void Parser::RV4()
+// {
     
-}
-void Parser::RV5()
-{
+// }
+// void Parser::RV5()
+// {
     
-}
-void Parser::RV6()
-{
+// }
+// void Parser::RV6()
+// {
     
-}
+// }
 
     // check_id();
     // prog.put_lex(Lex(POLIZ_ADDRESS, (void *)new int(c_val)));
@@ -1450,18 +1451,13 @@ void Interpretator::interpretation()
 
 int main()
 {
-    Parser p = Parser("test.txt");
-    p.analyze();
-    for (int i = 0; i < 100; i++)
-    {
-        if (TID[i].get_name() != NULL)
-        {
-            cout << TID[i].get_name() << " ";
-        }
-        if (TID[i].get_value() != NULL)
-        {
-            cout << ((int *)TID[i].get_value())[0];
-        }
-        cout << endl;
+    Scanner s= Scanner("test.txt");
+    Lex l = s.get_lex();
+    while(l.get_type() != LEX_NULL){
+        //cout << l.get_type() << endl;
+        l = s.get_lex();
+    }
+    for (int j=1; j<100; j++){
+        cout << TID[j].get_name()<< endl;
     }
 }

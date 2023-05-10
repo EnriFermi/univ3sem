@@ -1,6 +1,6 @@
 program
 {
-    int c;
-    while(true/){
-    }
+    x;
+    c;
+    x = u = 1;
 }
