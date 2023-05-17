@@ -75,6 +75,6 @@ public:
 };
  
 int main() {
-    A a; A b=a; a=b;
-    return 0;
+    int x=0, u=0;
+    x = u+1 = 1;
 }

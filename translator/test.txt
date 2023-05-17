@@ -1,6 +1,13 @@
 program
 {
-    x;
-    c;
-    x = u = 1;
+    int x;
+    L: for(x=0; x<1; x=1){
+        for(x=0; x<1; x=2){
+            if(x <0)
+                break;
+            else
+                goto L;
+        }
+        x = 1;
+    }
 }
