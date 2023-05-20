@@ -1,13 +1,10 @@
 program
 {
-    int x;
-    L: for(x=0; x<1; x=1){
-        for(x=0; x<1; x=2){
-            if(x <0)
-                break;
-            else
-                goto L;
-        }
-        x = 1;
-    }
+    struct mys{int x, y; string p;};
+    int x=666, y=666; string z; mys s1;
+    s1.p = "d";
+    s1.p = s1.p +"aun";
+    write(s1.p);
 }
+
+    
